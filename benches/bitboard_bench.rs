@@ -12,7 +12,7 @@ fn bench_comparison_single_access(c: &mut Criterion) {
 
     let mut group = c.benchmark_group("single_bit_access");
 
-    group.bench_function("explicit_method", |b| {
+    group.bench_function("`test` method", |b| {
         b.iter(|| {
             let mut sum = 0u32;
             for i in 0..64 {
@@ -33,7 +33,7 @@ fn bench_comparison_rank_file_access(c: &mut Criterion) {
 
     let mut group = c.benchmark_group("rank_file_access");
 
-    group.bench_function("explicit_method", |b| {
+    group.bench_function("`test_square` method", |b| {
         b.iter(|| {
             let mut sum = 0u32;
             for rank in 0..8 {
@@ -58,7 +58,7 @@ fn bench_chess_pattern(c: &mut Criterion) {
 
     let mut group = c.benchmark_group("chess_attack_pattern");
 
-    group.bench_function("test_square_method", |b| {
+    group.bench_function("`test_square` method", |b| {
         b.iter(|| {
             let mut attacks = 0u64;
             // Check east from a1
