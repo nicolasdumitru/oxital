@@ -9,7 +9,7 @@ use std::ops::{BitXor, BitXorAssign};
 use std::ops::{Shl, ShlAssign};
 use std::ops::{Shr, ShrAssign};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Bitboard {
     bits: u64,
 }
@@ -453,5 +453,207 @@ mod tests {
         assert!(bb.test_square(0, 7)); // h1
         assert!(bb.test_square(7, 0)); // a8
         assert!(bb.test_square(7, 7)); // h8
+    }
+
+    #[test]
+    fn test_partial_eq() {
+        let bb1 = Bitboard::from(0x123456789ABCDEF0);
+        let bb2 = Bitboard::from(0x123456789ABCDEF0);
+        let bb3 = Bitboard::from(0xFEDCBA9876543210);
+
+        // Test equality
+        assert_eq!(bb1, bb2);
+        assert!(bb1 == bb2);
+
+        // Test inequality
+        assert_ne!(bb1, bb3);
+        assert!(bb1 != bb3);
+
+        // Test with zero
+        let zero1 = Bitboard::from(0);
+        let zero2 = Bitboard::from(0);
+        assert_eq!(zero1, zero2);
+
+        // Test with max
+        let max1 = Bitboard::from(u64::MAX);
+        let max2 = Bitboard::from(u64::MAX);
+        assert_eq!(max1, max2);
+
+        // Test reflexivity
+        assert_eq!(bb1, bb1);
+        assert!(!(bb1 != bb1));
+    }
+
+    #[test]
+    fn test_left_shift() {
+        let bb = Bitboard::from(0x0F0F0F0F0F0F0F0F);
+
+        // Test shifting by different amounts
+        let result1 = bb << 1u8;
+        assert_eq!(result1.bits, 0x1E1E1E1E1E1E1E1E);
+
+        let result4 = bb << 4u8;
+        assert_eq!(result4.bits, 0xF0F0F0F0F0F0F0F0);
+
+        let result8 = bb << 8u8;
+        assert_eq!(result8.bits, 0x0F0F0F0F0F0F0F00);
+
+        // Test with different integer types that can convert to u8
+        let result_u8 = bb << 2u8;
+        let result_bool = bb << true; // bool converts to u8 (true = 1)
+        assert_eq!(result_u8.bits, (bb.bits << 2));
+        assert_eq!(result_bool.bits, (bb.bits << 1));
+
+        // Test shifting by zero
+        let result0 = bb << 0u8;
+        assert_eq!(result0.bits, bb.bits);
+
+        // Test overflow behavior
+        let high_bit = Bitboard::from(0x8000000000000000);
+        let overflow = high_bit << 1u8;
+        assert_eq!(overflow.bits, 0);
+
+        // Test shifting with pattern
+        let pattern = Bitboard::from(0x0000000000000001);
+        let shifted = pattern << 63u8;
+        assert_eq!(shifted.bits, 0x8000000000000000);
+    }
+
+    #[test]
+    fn test_left_shift_assign() {
+        let mut bb = Bitboard::from(0x0F0F0F0F0F0F0F0F);
+        let original = bb.bits;
+
+        // Test shifting by 1
+        bb <<= 1u8;
+        assert_eq!(bb.bits, 0x1E1E1E1E1E1E1E1E);
+
+        // Reset and test shifting by 4
+        bb = Bitboard::from(original);
+        bb <<= 4u8;
+        assert_eq!(bb.bits, 0xF0F0F0F0F0F0F0F0);
+
+        // Test with different integer types that can convert to u8
+        let mut bb1 = Bitboard::from(0x0F0F0F0F0F0F0F0F);
+        let mut bb2 = Bitboard::from(0x0F0F0F0F0F0F0F0F);
+        bb1 <<= 3u8;
+        bb2 <<= false; // false converts to u8 (false = 0)
+        assert_eq!(bb1.bits, 0x7878787878787878);
+        assert_eq!(bb2.bits, 0x0F0F0F0F0F0F0F0F); // shifted by 0
+
+        // Test shifting by zero
+        let mut bb = Bitboard::from(0x123456789ABCDEF0);
+        let original = bb.bits;
+        bb <<= 0u8;
+        assert_eq!(bb.bits, original);
+
+        // Test chained assignment
+        let mut bb = Bitboard::from(0x0000000000000001);
+        bb <<= 1u8;
+        bb <<= 1u8;
+        bb <<= 1u8;
+        assert_eq!(bb.bits, 0x0000000000000008);
+    }
+
+    #[test]
+    fn test_right_shift() {
+        let bb = Bitboard::from(0xF0F0F0F0F0F0F0F0);
+
+        // Test shifting by different amounts
+        let result1 = bb >> 1u8;
+        assert_eq!(result1.bits, 0x7878787878787878);
+
+        let result4 = bb >> 4u8;
+        assert_eq!(result4.bits, 0x0F0F0F0F0F0F0F0F);
+
+        let result8 = bb >> 8u8;
+        assert_eq!(result8.bits, 0x00F0F0F0F0F0F0F0);
+
+        // Test with different integer types that can convert to u8
+        let result_u8 = bb >> 2u8;
+        let result_bool = bb >> true; // bool converts to u8 (true = 1)
+        assert_eq!(result_u8.bits, (bb.bits >> 2));
+        assert_eq!(result_bool.bits, (bb.bits >> 1));
+
+        // Test shifting by zero
+        let result0 = bb >> 0u8;
+        assert_eq!(result0.bits, bb.bits);
+
+        // Test underflow behavior
+        let low_bit = Bitboard::from(0x0000000000000001);
+        let underflow = low_bit >> 1u8;
+        assert_eq!(underflow.bits, 0);
+
+        // Test shifting with pattern
+        let pattern = Bitboard::from(0x8000000000000000);
+        let shifted = pattern >> 63u8;
+        assert_eq!(shifted.bits, 0x0000000000000001);
+
+        // Test large shift (close to complete but not overflow)
+        let large_shift = bb >> 63u8;
+        assert_eq!(large_shift.bits, bb.bits >> 63);
+    }
+
+    #[test]
+    fn test_right_shift_assign() {
+        let mut bb = Bitboard::from(0xF0F0F0F0F0F0F0F0);
+        let original = bb.bits;
+
+        // Test shifting by 1
+        bb >>= 1u8;
+        assert_eq!(bb.bits, 0x7878787878787878);
+
+        // Reset and test shifting by 4
+        bb = Bitboard::from(original);
+        bb >>= 4u8;
+        assert_eq!(bb.bits, 0x0F0F0F0F0F0F0F0F);
+
+        // Test with different integer types that can convert to u8
+        let mut bb1 = Bitboard::from(0xF0F0F0F0F0F0F0F0);
+        let mut bb2 = Bitboard::from(0xF0F0F0F0F0F0F0F0);
+        bb1 >>= 3u8;
+        bb2 >>= false; // false converts to u8 (false = 0)
+        assert_eq!(bb1.bits, 0x1E1E1E1E1E1E1E1E);
+        assert_eq!(bb2.bits, 0xF0F0F0F0F0F0F0F0); // shifted by 0
+
+        // Test shifting by zero
+        let mut bb = Bitboard::from(0x123456789ABCDEF0);
+        let original = bb.bits;
+        bb >>= 0u8;
+        assert_eq!(bb.bits, original);
+
+        // Test chained assignment
+        let mut bb = Bitboard::from(0x8000000000000000);
+        bb >>= 1u8;
+        bb >>= 1u8;
+        bb >>= 1u8;
+        assert_eq!(bb.bits, 0x1000000000000000);
+
+        // Test shifting to zero
+        let mut bb = Bitboard::from(0x0000000000000001);
+        bb >>= 1u8;
+        assert_eq!(bb.bits, 0);
+    }
+
+    #[test]
+    fn test_shift_symmetry() {
+        let original = Bitboard::from(0x0000FF0000FF0000);
+
+        // Test that left shift followed by right shift returns to original
+        // (when no bits are lost)
+        let shifted_left = original << 8u8;
+        let back_to_original = shifted_left >> 8u8;
+        assert_eq!(back_to_original.bits, original.bits);
+
+        // Test the reverse
+        let shifted_right = original >> 8u8;
+        let back_to_original = shifted_right << 8u8;
+        assert_eq!(back_to_original.bits, original.bits);
+
+        // Test with assign operations
+        let mut bb = original;
+        bb <<= 4u8;
+        bb >>= 4u8;
+        assert_eq!(bb.bits, original.bits);
     }
 }
