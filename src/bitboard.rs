@@ -1,6 +1,7 @@
 // Copyright (C) 2025 Nicolas Dumitru
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use std::cmp::PartialEq;
 use std::ops::Not;
 use std::ops::{BitAnd, BitAndAssign};
 use std::ops::{BitOr, BitOrAssign};
@@ -47,6 +48,16 @@ impl Bitboard {
     #[inline]
     pub fn test_square(&self, rank: u8, file: u8) -> bool {
         self.test(Self::square_to_index(rank, file))
+    }
+}
+
+impl PartialEq for Bitboard {
+    fn eq(&self, other: &Self) -> bool {
+        self.bits == other.bits
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        self.bits != other.bits
     }
 }
 
