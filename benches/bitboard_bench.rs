@@ -8,7 +8,7 @@ use oxital::bitboard::Bitboard;
 
 // Compare get method vs index operator for single bit access
 fn bench_comparison_single_access(c: &mut Criterion) {
-    let board = Bitboard::new(0xAA55AA55AA55AA55);
+    let board = Bitboard::from(0xAA55AA55AA55AA55);
 
     let mut group = c.benchmark_group("single_bit_access");
 
@@ -29,7 +29,7 @@ fn bench_comparison_single_access(c: &mut Criterion) {
 
 // Compare for rank/file access
 fn bench_comparison_rank_file_access(c: &mut Criterion) {
-    let board = Bitboard::new(0xAA55AA55AA55AA55);
+    let board = Bitboard::from(0xAA55AA55AA55AA55);
 
     let mut group = c.benchmark_group("rank_file_access");
 
@@ -54,7 +54,7 @@ fn bench_comparison_rank_file_access(c: &mut Criterion) {
 fn bench_chess_pattern(c: &mut Criterion) {
     // Rook on a1, checking if it attacks along first rank
     // let rook_board = Bitboard::new(0x0000000000000001);
-    let occupied = Bitboard::new(0x00000000000000FF); // First rank occupied
+    let occupied = Bitboard::from(0x00000000000000FF); // First rank occupied
 
     let mut group = c.benchmark_group("chess_attack_pattern");
 

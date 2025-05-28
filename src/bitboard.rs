@@ -10,7 +10,7 @@ pub struct Bitboard {
 
 impl Bitboard {
     #[inline]
-    pub fn new(bits: u64) -> Self {
+    pub fn from(bits: u64) -> Self {
         Self { bits }
     }
 
@@ -50,7 +50,7 @@ impl BitAnd for Bitboard {
 
     #[inline]
     fn bitand(self, rhs: Self) -> Self::Output {
-        Self::new(self.bits & rhs.bits)
+        Self::from(self.bits & rhs.bits)
     }
 }
 
@@ -66,7 +66,7 @@ impl BitOr for Bitboard {
 
     #[inline]
     fn bitor(self, rhs: Self) -> Self::Output {
-        Self::new(self.bits | rhs.bits)
+        Self::from(self.bits | rhs.bits)
     }
 }
 
@@ -82,7 +82,7 @@ impl BitXor for Bitboard {
 
     #[inline]
     fn bitxor(self, rhs: Self) -> Self::Output {
-        Self::new(self.bits ^ rhs.bits)
+        Self::from(self.bits ^ rhs.bits)
     }
 }
 
@@ -98,7 +98,7 @@ impl Not for Bitboard {
 
     #[inline]
     fn not(self) -> Self::Output {
-        Self::new(!self.bits)
+        Self::from(!self.bits)
     }
 }
 
@@ -108,13 +108,13 @@ mod tests {
 
     #[test]
     fn test_new_bitboard() {
-        let bb = Bitboard::new(0);
+        let bb = Bitboard::from(0);
         assert_eq!(bb.bits, 0);
 
-        let bb = Bitboard::new(u64::MAX);
+        let bb = Bitboard::from(u64::MAX);
         assert_eq!(bb.bits, u64::MAX);
 
-        let bb = Bitboard::new(0x123456789ABCDEF0);
+        let bb = Bitboard::from(0x123456789ABCDEF0);
         assert_eq!(bb.bits, 0x123456789ABCDEF0);
     }
 
@@ -144,33 +144,33 @@ mod tests {
     #[test]
     fn test_bit_testing() {
         // Test empty bitboard
-        let empty = Bitboard::new(0);
+        let empty = Bitboard::from(0);
         for i in 0..64 {
             assert!(!empty.test(i));
         }
 
         // Test full bitboard
-        let full = Bitboard::new(u64::MAX);
+        let full = Bitboard::from(u64::MAX);
         for i in 0..64 {
             assert!(full.test(i));
         }
 
         // Test single bit
-        let single = Bitboard::new(1);
+        let single = Bitboard::from(1);
         assert!(single.test(0));
         for i in 1..64 {
             assert!(!single.test(i));
         }
 
         // Test highest bit
-        let high = Bitboard::new(1u64 << 63);
+        let high = Bitboard::from(1u64 << 63);
         assert!(high.test(63));
         for i in 0..63 {
             assert!(!high.test(i));
         }
 
         // Test alternating pattern
-        let alternating = Bitboard::new(0xAAAAAAAAAAAAAAAA);
+        let alternating = Bitboard::from(0xAAAAAAAAAAAAAAAA);
         for i in 0..64 {
             if i % 2 == 1 {
                 assert!(alternating.test(i));
@@ -183,7 +183,7 @@ mod tests {
     #[test]
     fn test_square_testing() {
         // Test empty bitboard
-        let empty = Bitboard::new(0);
+        let empty = Bitboard::from(0);
         for rank in 0..8 {
             for file in 0..8 {
                 assert!(!empty.test_square(rank, file));
@@ -191,7 +191,7 @@ mod tests {
         }
 
         // Test single square
-        let single = Bitboard::new(1u64 << 28); // e4
+        let single = Bitboard::from(1u64 << 28); // e4
         assert!(single.test_square(3, 4));
 
         // Test that other squares are empty
@@ -204,7 +204,7 @@ mod tests {
         }
 
         // Test corner squares
-        let corners = Bitboard::new((1u64 << 0) | (1u64 << 7) | (1u64 << 56) | (1u64 << 63));
+        let corners = Bitboard::from((1u64 << 0) | (1u64 << 7) | (1u64 << 56) | (1u64 << 63));
         assert!(corners.test_square(0, 0)); // a1
         assert!(corners.test_square(0, 7)); // h1
         assert!(corners.test_square(7, 0)); // a8
@@ -217,13 +217,13 @@ mod tests {
 
     #[test]
     fn test_bitwise_and() {
-        let bb1 = Bitboard::new(0xFF00FF00FF00FF00);
-        let bb2 = Bitboard::new(0xF0F0F0F0F0F0F0F0);
+        let bb1 = Bitboard::from(0xFF00FF00FF00FF00);
+        let bb2 = Bitboard::from(0xF0F0F0F0F0F0F0F0);
         let result = bb1 & bb2;
         assert_eq!(result.bits, 0xF000F000F000F000);
 
         // Test with zero
-        let zero = Bitboard::new(0);
+        let zero = Bitboard::from(0);
         let result = bb1 & zero;
         assert_eq!(result.bits, 0);
 
@@ -234,26 +234,26 @@ mod tests {
 
     #[test]
     fn test_bitwise_and_assign() {
-        let mut bb1 = Bitboard::new(0xFF00FF00FF00FF00);
-        let bb2 = Bitboard::new(0xF0F0F0F0F0F0F0F0);
+        let mut bb1 = Bitboard::from(0xFF00FF00FF00FF00);
+        let bb2 = Bitboard::from(0xF0F0F0F0F0F0F0F0);
         bb1 &= bb2;
         assert_eq!(bb1.bits, 0xF000F000F000F000);
 
         // Test with zero
-        let mut bb = Bitboard::new(0xFF00FF00FF00FF00);
-        bb &= Bitboard::new(0);
+        let mut bb = Bitboard::from(0xFF00FF00FF00FF00);
+        bb &= Bitboard::from(0);
         assert_eq!(bb.bits, 0);
     }
 
     #[test]
     fn test_bitwise_or() {
-        let bb1 = Bitboard::new(0xFF00FF00FF00FF00);
-        let bb2 = Bitboard::new(0x00FF00FF00FF00FF);
+        let bb1 = Bitboard::from(0xFF00FF00FF00FF00);
+        let bb2 = Bitboard::from(0x00FF00FF00FF00FF);
         let result = bb1 | bb2;
         assert_eq!(result.bits, u64::MAX);
 
         // Test with zero
-        let zero = Bitboard::new(0);
+        let zero = Bitboard::from(0);
         let result = bb1 | zero;
         assert_eq!(result.bits, bb1.bits);
 
@@ -264,27 +264,27 @@ mod tests {
 
     #[test]
     fn test_bitwise_or_assign() {
-        let mut bb1 = Bitboard::new(0xFF00FF00FF00FF00);
-        let bb2 = Bitboard::new(0x00FF00FF00FF00FF);
+        let mut bb1 = Bitboard::from(0xFF00FF00FF00FF00);
+        let bb2 = Bitboard::from(0x00FF00FF00FF00FF);
         bb1 |= bb2;
         assert_eq!(bb1.bits, u64::MAX);
 
         // Test with zero
-        let mut bb = Bitboard::new(0xFF00FF00FF00FF00);
+        let mut bb = Bitboard::from(0xFF00FF00FF00FF00);
         let original = bb.bits;
-        bb |= Bitboard::new(0);
+        bb |= Bitboard::from(0);
         assert_eq!(bb.bits, original);
     }
 
     #[test]
     fn test_bitwise_xor() {
-        let bb1 = Bitboard::new(0xFF00FF00FF00FF00);
-        let bb2 = Bitboard::new(0xF0F0F0F0F0F0F0F0);
+        let bb1 = Bitboard::from(0xFF00FF00FF00FF00);
+        let bb2 = Bitboard::from(0xF0F0F0F0F0F0F0F0);
         let result = bb1 ^ bb2;
         assert_eq!(result.bits, 0x0FF00FF00FF00FF0);
 
         // Test with zero
-        let zero = Bitboard::new(0);
+        let zero = Bitboard::from(0);
         let result = bb1 ^ zero;
         assert_eq!(result.bits, bb1.bits);
 
@@ -295,13 +295,13 @@ mod tests {
 
     #[test]
     fn test_bitwise_xor_assign() {
-        let mut bb1 = Bitboard::new(0xFF00FF00FF00FF00);
-        let bb2 = Bitboard::new(0xF0F0F0F0F0F0F0F0);
+        let mut bb1 = Bitboard::from(0xFF00FF00FF00FF00);
+        let bb2 = Bitboard::from(0xF0F0F0F0F0F0F0F0);
         bb1 ^= bb2;
         assert_eq!(bb1.bits, 0x0FF00FF00FF00FF0);
 
         // Test XOR with self (should result in zero)
-        let mut bb = Bitboard::new(0xFF00FF00FF00FF00);
+        let mut bb = Bitboard::from(0xFF00FF00FF00FF00);
         let original = bb;
         bb ^= original;
         assert_eq!(bb.bits, 0);
@@ -309,27 +309,27 @@ mod tests {
 
     #[test]
     fn test_bitwise_not() {
-        let bb = Bitboard::new(0);
+        let bb = Bitboard::from(0);
         let result = !bb;
         assert_eq!(result.bits, u64::MAX);
 
-        let bb = Bitboard::new(u64::MAX);
+        let bb = Bitboard::from(u64::MAX);
         let result = !bb;
         assert_eq!(result.bits, 0);
 
-        let bb = Bitboard::new(0xFF00FF00FF00FF00);
+        let bb = Bitboard::from(0xFF00FF00FF00FF00);
         let result = !bb;
         assert_eq!(result.bits, 0x00FF00FF00FF00FF);
 
         // Test double negation
-        let bb = Bitboard::new(0x123456789ABCDEF0);
+        let bb = Bitboard::from(0x123456789ABCDEF0);
         let result = !!bb;
         assert_eq!(result.bits, bb.bits);
     }
 
     #[test]
     fn test_copy_and_clone() {
-        let bb1 = Bitboard::new(0x123456789ABCDEF0);
+        let bb1 = Bitboard::from(0x123456789ABCDEF0);
         let bb2 = bb1; // Copy
         let bb3 = bb1.clone(); // Clone
 
@@ -341,14 +341,14 @@ mod tests {
     #[test]
     fn test_chess_squares() {
         // Test some well-known chess squares
-        let mut board = Bitboard::new(0);
+        let mut board = Bitboard::from(0);
 
         // Set e4 (rank 3, file 4)
-        board |= Bitboard::new(1u64 << Bitboard::square_to_index(3, 4));
+        board |= Bitboard::from(1u64 << Bitboard::square_to_index(3, 4));
         assert!(board.test_square(3, 4));
 
         // Set d5 (rank 4, file 3)
-        board |= Bitboard::new(1u64 << Bitboard::square_to_index(4, 3));
+        board |= Bitboard::from(1u64 << Bitboard::square_to_index(4, 3));
         assert!(board.test_square(4, 3));
 
         // Verify both squares are set
@@ -362,9 +362,9 @@ mod tests {
 
     #[test]
     fn test_bitboard_operations_chain() {
-        let bb1 = Bitboard::new(0xF0F0F0F0F0F0F0F0);
-        let bb2 = Bitboard::new(0xFF00FF00FF00FF00);
-        let bb3 = Bitboard::new(0x0F0F0F0F0F0F0F0F);
+        let bb1 = Bitboard::from(0xF0F0F0F0F0F0F0F0);
+        let bb2 = Bitboard::from(0xFF00FF00FF00FF00);
+        let bb3 = Bitboard::from(0x0F0F0F0F0F0F0F0F);
 
         // Chain operations
         let result = (bb1 | bb2) & !bb3;
@@ -380,7 +380,7 @@ mod tests {
     #[test]
     fn test_edge_cases() {
         // Test boundary conditions for test() method
-        let bb = Bitboard::new(0x8000000000000001);
+        let bb = Bitboard::from(0x8000000000000001);
         assert!(bb.test(0)); // First bit
         assert!(bb.test(63)); // Last bit
         for i in 1..63 {
@@ -388,7 +388,7 @@ mod tests {
         }
 
         // Test boundary conditions for test_square() method
-        let bb = Bitboard::new(0x8100000000000081);
+        let bb = Bitboard::from(0x8100000000000081);
         assert!(bb.test_square(0, 0)); // a1
         assert!(bb.test_square(0, 7)); // h1
         assert!(bb.test_square(7, 0)); // a8
