@@ -1,7 +1,12 @@
 // Copyright (C) 2025 Nicolas Dumitru
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not};
+use std::ops::Not;
+use std::ops::{BitAnd, BitAndAssign};
+use std::ops::{BitOr, BitOrAssign};
+use std::ops::{BitXor, BitXorAssign};
+use std::ops::{Shl, ShlAssign};
+use std::ops::{Shr, ShrAssign};
 
 #[derive(Clone, Copy)]
 pub struct Bitboard {
@@ -42,6 +47,15 @@ impl Bitboard {
     #[inline]
     pub fn test_square(&self, rank: u8, file: u8) -> bool {
         self.test(Self::square_to_index(rank, file))
+    }
+}
+
+impl Not for Bitboard {
+    type Output = Bitboard;
+
+    #[inline]
+    fn not(self) -> Self::Output {
+        Self::from(!self.bits)
     }
 }
 
@@ -93,12 +107,47 @@ impl BitXorAssign for Bitboard {
     }
 }
 
-impl Not for Bitboard {
+impl<T> Shl<T> for Bitboard
+where
+    T: Into<u8>,
+{
     type Output = Bitboard;
 
     #[inline]
-    fn not(self) -> Self::Output {
-        Self::from(!self.bits)
+    fn shl(self, rhs: T) -> Self::Output {
+        Self::from(self.bits << rhs.into())
+    }
+}
+
+impl<T> ShlAssign<T> for Bitboard
+where
+    T: Into<u8>,
+{
+    #[inline]
+    fn shl_assign(&mut self, rhs: T) {
+        self.bits <<= rhs.into()
+    }
+}
+
+impl<T> Shr<T> for Bitboard
+where
+    T: Into<u8>,
+{
+    type Output = Bitboard;
+
+    #[inline]
+    fn shr(self, rhs: T) -> Self::Output {
+        Self::from(self.bits >> rhs.into())
+    }
+}
+
+impl<T> ShrAssign<T> for Bitboard
+where
+    T: Into<u8>,
+{
+    #[inline]
+    fn shr_assign(&mut self, rhs: T) {
+        self.bits >>= rhs.into()
     }
 }
 
