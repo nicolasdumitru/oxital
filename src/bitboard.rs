@@ -123,10 +123,12 @@ impl From<&str> for Bitboard {
 }
 
 impl PartialEq for Bitboard {
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.bits == other.bits
     }
 
+    #[inline]
     fn ne(&self, other: &Self) -> bool {
         self.bits != other.bits
     }
