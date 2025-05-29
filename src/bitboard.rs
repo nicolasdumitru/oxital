@@ -1,6 +1,7 @@
 // Copyright (C) 2025 Nicolas Dumitru
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use core::convert::From;
 use std::cmp::PartialEq;
 use std::ops::Not;
 use std::ops::{BitAnd, BitAndAssign};
@@ -15,11 +16,6 @@ pub struct Bitboard {
 }
 
 impl Bitboard {
-    #[inline]
-    pub fn from(bits: u64) -> Self {
-        Self { bits }
-    }
-
     // Converts a (rank, file) coordinate pair to a square index using
     // Little-Endian Rank-File (LERF) mapping.
     // Returns index in range [0, 63] via 8 * rank + file.
@@ -48,6 +44,81 @@ impl Bitboard {
     #[inline]
     pub fn test_square(&self, rank: u8, file: u8) -> bool {
         self.test(Self::square_to_index(rank, file))
+    }
+}
+
+impl From<u64> for Bitboard {
+    /// Creates a Bitboard from a u64.
+    #[inline]
+    fn from(bits: u64) -> Self {
+        Self { bits }
+    }
+}
+
+impl From<&str> for Bitboard {
+    /// Creates a Bitboard from a pattern string.
+    ///
+    /// This constructor provides a flexible way to create bitboards from string literals
+    /// for better visualization of constants. The encoding is:
+    /// - '0' or '.' represents an empty square (unset bit)
+    /// - '1' or 'X' represents an occupied square (set bit)
+    /// - Newlines are ignored and only used for visual delimitation of ranks
+    /// - Any other characters will cause a panic at runtime
+    ///
+    /// The pattern should represent exactly 64 squares, read from rank 8 to rank 1
+    /// (top to bottom), and from file a to file h (left to right).
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pattern contains invalid characters or doesn't represent exactly 64 squares.
+    ///
+    /// # Example
+    /// ```
+    /// # use oxital::bitboard::Bitboard;
+    /// let board = Bitboard::from("
+    ///     ........
+    ///     ........
+    ///     ........
+    ///     ...1....
+    ///     ........
+    ///     ........
+    ///     ......X.
+    ///     ........
+    /// ");
+    ///
+    /// // Or more compactly:
+    /// let board = Bitboard::from("0000000000000000000000000001000000000000000000000000000000000000");
+    /// ```
+    fn from(pattern: &str) -> Self {
+        // Filter out newlines and whitespace for processing
+        let cleaned: String = pattern.chars().filter(|&ch| !ch.is_whitespace()).collect();
+
+        if cleaned.len() != 64 {
+            panic!("Pattern must contain exactly 64 squares, got {}", cleaned.len());
+        }
+
+        let mut bits: u64 = 0;
+
+        for (i, ch) in cleaned.chars().enumerate() {
+            match ch {
+                '0' | '.' => {} // Empty square - bit remains unset
+                '1' | 'X' => {
+                    // Occupied square - set the bit
+                    // i = 0 corresponds to rank 7, file 0 (a8)
+                    // i = 63 corresponds to rank 0, file 7 (h1)
+                    let rank = 7 - (i / 8) as u8;
+                    let file = (i % 8) as u8;
+                    let square_index = Self::square_to_index(rank, file);
+                    bits |= 1u64 << square_index;
+                }
+                _ => panic!(
+                    "Invalid character '{}' in pattern. Only '0', '.', '1', and 'X' are allowed.",
+                    ch
+                ),
+            }
+        }
+
+        Self { bits }
     }
 }
 
@@ -169,13 +240,13 @@ mod tests {
     #[test]
     fn test_new_bitboard() {
         let bb = Bitboard::from(0);
-        assert_eq!(bb.bits, 0);
+        assert!(bb == Bitboard::from(0));
 
         let bb = Bitboard::from(u64::MAX);
-        assert_eq!(bb.bits, u64::MAX);
+        assert!(bb == Bitboard::from(u64::MAX));
 
         let bb = Bitboard::from(0x123456789ABCDEF0);
-        assert_eq!(bb.bits, 0x123456789ABCDEF0);
+        assert!(bb == Bitboard::from(0x123456789ABCDEF0));
     }
 
     #[test]
@@ -280,16 +351,16 @@ mod tests {
         let bb1 = Bitboard::from(0xFF00FF00FF00FF00);
         let bb2 = Bitboard::from(0xF0F0F0F0F0F0F0F0);
         let result = bb1 & bb2;
-        assert_eq!(result.bits, 0xF000F000F000F000);
+        assert_eq!(result, Bitboard::from(0xF000F000F000F000));
 
         // Test with zero
         let zero = Bitboard::from(0);
         let result = bb1 & zero;
-        assert_eq!(result.bits, 0);
+        assert_eq!(result, Bitboard::from(0));
 
         // Test with self
         let result = bb1 & bb1;
-        assert_eq!(result.bits, bb1.bits);
+        assert_eq!(result, bb1);
     }
 
     #[test]
@@ -297,12 +368,12 @@ mod tests {
         let mut bb1 = Bitboard::from(0xFF00FF00FF00FF00);
         let bb2 = Bitboard::from(0xF0F0F0F0F0F0F0F0);
         bb1 &= bb2;
-        assert_eq!(bb1.bits, 0xF000F000F000F000);
+        assert_eq!(bb1, Bitboard::from(0xF000F000F000F000));
 
         // Test with zero
         let mut bb = Bitboard::from(0xFF00FF00FF00FF00);
         bb &= Bitboard::from(0);
-        assert_eq!(bb.bits, 0);
+        assert_eq!(bb, Bitboard::from(0));
     }
 
     #[test]
@@ -310,16 +381,16 @@ mod tests {
         let bb1 = Bitboard::from(0xFF00FF00FF00FF00);
         let bb2 = Bitboard::from(0x00FF00FF00FF00FF);
         let result = bb1 | bb2;
-        assert_eq!(result.bits, u64::MAX);
+        assert_eq!(result, Bitboard::from(u64::MAX));
 
         // Test with zero
         let zero = Bitboard::from(0);
         let result = bb1 | zero;
-        assert_eq!(result.bits, bb1.bits);
+        assert_eq!(result, bb1);
 
         // Test with self
         let result = bb1 | bb1;
-        assert_eq!(result.bits, bb1.bits);
+        assert_eq!(result, bb1);
     }
 
     #[test]
@@ -327,13 +398,13 @@ mod tests {
         let mut bb1 = Bitboard::from(0xFF00FF00FF00FF00);
         let bb2 = Bitboard::from(0x00FF00FF00FF00FF);
         bb1 |= bb2;
-        assert_eq!(bb1.bits, u64::MAX);
+        assert_eq!(bb1, Bitboard::from(u64::MAX));
 
         // Test with zero
         let mut bb = Bitboard::from(0xFF00FF00FF00FF00);
-        let original = bb.bits;
+        let original = bb;
         bb |= Bitboard::from(0);
-        assert_eq!(bb.bits, original);
+        assert_eq!(bb, original);
     }
 
     #[test]
@@ -341,7 +412,7 @@ mod tests {
         let bb1 = Bitboard::from(0xFF00FF00FF00FF00);
         let bb2 = Bitboard::from(0xF0F0F0F0F0F0F0F0);
         let result = bb1 ^ bb2;
-        assert_eq!(result.bits, 0x0FF00FF00FF00FF0);
+        assert_eq!(result, Bitboard::from(0x0FF00FF00FF00FF0));
 
         // Test with zero
         let zero = Bitboard::from(0);
@@ -655,5 +726,175 @@ mod tests {
         bb <<= 4u8;
         bb >>= 4u8;
         assert_eq!(bb.bits, original.bits);
+    }
+
+    #[test]
+    fn test_from_pattern_basic() {
+        // Test empty board
+        let empty = Bitboard::from(
+            "
+            ........
+            ........
+            ........
+            ........
+            ........
+            ........
+            ........
+            ........
+        ",
+        );
+        assert_eq!(empty.bits, 0);
+
+        // Test single bit at a8 (rank 7, file 0)
+        let a8 = Bitboard::from(
+            "
+            1.......
+            ........
+            ........
+            ........
+            ........
+            ........
+            ........
+            ........
+        ",
+        );
+        assert_eq!(a8.bits, 1u64 << 56);
+
+        // Test single bit at h1 (rank 0, file 7)
+        let h1 = Bitboard::from(
+            "
+            ........
+            ........
+            ........
+            ........
+            ........
+            ........
+            ........
+            .......1
+        ",
+        );
+        assert_eq!(h1.bits, 1u64 << 7);
+    }
+
+    #[test]
+    fn test_from_pattern_characters() {
+        // Test all valid empty characters
+        let empty_dots =
+            Bitboard::from("................................................................");
+        let empty_zeros =
+            Bitboard::from("0000000000000000000000000000000000000000000000000000000000000000");
+        assert_eq!(empty_dots.bits, 0);
+        assert_eq!(empty_zeros.bits, 0);
+
+        // Test all valid occupied characters
+        let pattern_ones = Bitboard::from(
+            "
+            1.......
+            ........
+            ........
+            ........
+            ........
+            ........
+            ........
+            ........
+        ",
+        );
+        let pattern_x = Bitboard::from(
+            "
+            X.......
+            ........
+            ........
+            ........
+            ........
+            ........
+            ........
+            ........
+        ",
+        );
+        assert_eq!(pattern_ones.bits, pattern_x.bits);
+        assert_eq!(pattern_ones.bits, 1u64 << 56);
+    }
+
+    #[test]
+    fn test_from_pattern_compact() {
+        // Test without newlines - compact format
+        let compact =
+            Bitboard::from("1000000000000000000000000000000000000000000000000000000000000001");
+        // Should have bits set at a8 (index 56) and h1 (index 7)
+        assert_eq!(compact.bits, (1u64 << 56) | (1u64 << 7));
+    }
+
+    #[test]
+    fn test_from_pattern_whitespace_ignored() {
+        // Test that various whitespace is ignored
+        let with_spaces = Bitboard::from(
+            "
+            1 0 0 0 0 0 0 0
+            0 0 0 0 0 0 0 0
+            0 0 0 0 0 0 0 0
+            0 0 0 0 0 0 0 0
+            0 0 0 0 0 0 0 0
+            0 0 0 0 0 0 0 0
+            0 0 0 0 0 0 0 0
+            0 0 0 0 0 0 0 1
+        ",
+        );
+        let expected = (1u64 << 56) | (1u64 << 7);
+        assert_eq!(with_spaces.bits, expected);
+    }
+
+    #[test]
+    fn test_from_pattern_chess_positions() {
+        // Test a more complex pattern - initial pawn structure
+        let pawns = Bitboard::from(
+            "
+            ........
+            11111111
+            ........
+            ........
+            ........
+            ........
+            11111111
+            ........
+        ",
+        );
+        // Rank 6 (index 48-55) and rank 1 (index 8-15) should be set
+        let expected = 0x00FF_0000_0000_FF00u64;
+        assert_eq!(pawns.bits, expected);
+    }
+
+    #[test]
+    #[should_panic(expected = "Pattern must contain exactly 64 squares")]
+    fn test_from_pattern_too_few_squares() {
+        let _ = Bitboard::from("1010101");
+    }
+
+    #[test]
+    #[should_panic(expected = "Pattern must contain exactly 64 squares")]
+    fn test_from_pattern_too_many_squares() {
+        let _ = Bitboard::from("10101010101010101010101010101010101010101010101010101010101010101");
+    }
+
+    #[test]
+    #[should_panic(expected = "Invalid character 'Z' in pattern")]
+    fn test_from_pattern_invalid_character() {
+        let _ = Bitboard::from(
+            "
+            1.......
+            ........
+            ........
+            ...Z....
+            ........
+            ........
+            ........
+            ........
+        ",
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "Invalid character '2' in pattern")]
+    fn test_from_pattern_invalid_number() {
+        let _ = Bitboard::from("2000000000000000000000000000000000000000000000000000000000000000");
     }
 }
