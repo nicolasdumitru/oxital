@@ -16,31 +16,31 @@ pub struct Bitboard {
 }
 
 impl Bitboard {
-    // Converts a (rank, file) coordinate pair to a square index using
-    // Little-Endian Rank-File (LERF) mapping.
-    // Returns index in range [0, 63] via 8 * rank + file.
-    // Expects rank and file in the range [0, 7], where rank is the row (0 =
-    // rank 1) and file is the column (0 = file a).
-    // Panics in debug mode if rank or file is out of bounds.
+    /// Converts a (rank, file) coordinate pair to a square index using
+    /// Little-Endian Rank-File (LERF) mapping.
+    /// Returns index in range [0, 63] via 8 * rank + file.
+    /// Expects rank and file in the range [0, 7], where rank is the row (0 =
+    /// rank 1) and file is the column (0 = file a).
+    /// Panics in debug mode if rank or file is out of bounds.
     #[inline]
     fn square_to_index(rank: u8, file: u8) -> u8 {
         debug_assert!(rank < 8 && file < 8);
         (rank << 3) | file // <=> 8 * rank + file for rank, file in [0, 7]
     }
 
-    // Returns true if the bit at the given square's index is
-    // set.
-    // Expects index in range [0, 63].
-    // Panics in debug mode if index is out of bounds.
+    /// Returns true if the bit at the given square's index is
+    /// set.
+    /// Expects index in range [0, 63].
+    /// Panics in debug mode if index is out of bounds.
     #[inline]
     pub fn test(&self, index: u8) -> bool {
         debug_assert!(index < 64);
         (self.bits & (1 << index)) != 0
     }
 
-    // Returns true if the bit at the given (rank, file) coordinates is set.
-    // Expects rank and file in range [0, 7], where rank is the row and file is
-    // the column. Internally maps the square to its index using.
+    /// Returns true if the bit at the given (rank, file) coordinates is set.
+    /// Expects rank and file in range [0, 7], where rank is the row and file is
+    /// the column. Internally maps the square to its index using.
     #[inline]
     pub fn test_square(&self, rank: u8, file: u8) -> bool {
         self.test(Self::square_to_index(rank, file))
