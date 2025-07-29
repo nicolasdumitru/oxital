@@ -31,13 +31,11 @@
         };
       in
       {
-        devShells.default =
-          with pkgs;
-          mkShell {
-            buildInputs = [
-              rustToolchain
-            ];
-          };
+        devShells.default = pkgs.mkShell {
+          packages = [
+            rustToolchain
+          ];
+        };
       }
     );
 }
