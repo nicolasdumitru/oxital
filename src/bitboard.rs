@@ -23,6 +23,34 @@ impl Bitboard {
     pub fn test(&self, square: Square) -> bool {
         (self.bits & (1 << square.index())) != 0
     }
+
+    /// Returns the bitboard with one bit set
+    #[inline]
+    pub fn set(&self, square: Square) -> Self {
+        Self {
+            bits: self.bits | square.mask(),
+        }
+    }
+
+    /// Sets a bit of the bitboard
+    #[inline]
+    pub fn set_mut(&mut self, square: Square) {
+        self.bits |= square.mask()
+    }
+
+    /// Returns the bitboard with one bit unset
+    #[inline]
+    pub fn unset(&self, square: Square) -> Self {
+        Self {
+            bits: self.bits & !square.mask(),
+        }
+    }
+
+    /// Unsets a bit of the bitboard
+    #[inline]
+    pub fn unset_mut(&mut self, square: Square) {
+        self.bits &= !square.mask()
+    }
 }
 
 impl From<Square> for Bitboard {
