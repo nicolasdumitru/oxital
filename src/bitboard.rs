@@ -9,40 +9,18 @@ use std::ops::{BitXor, BitXorAssign};
 use std::ops::{Shl, ShlAssign};
 use std::ops::{Shr, ShrAssign};
 
+use crate::types::{File, Rank, Square};
+
 #[derive(Clone, Copy, Debug)]
 pub struct Bitboard {
     bits: u64,
 }
 
 impl Bitboard {
-    /// Converts a (rank, file) coordinate pair to a square index using
-    /// Little-Endian Rank-File (LERF) mapping.
-    /// Returns index in range [0, 63] via 8 * rank + file.
-    /// Expects rank and file in the range [0, 7], where rank is the row (0 =
-    /// rank 1) and file is the column (0 = file a).
-    /// Panics in debug mode if rank or file is out of bounds.
+    /// Returns true if the bit of the given square is set.
     #[inline]
-    fn square_to_index(rank: u8, file: u8) -> u8 {
-        debug_assert!(rank < 8 && file < 8);
-        (rank << 3) | file // <=> 8 * rank + file for rank, file in [0, 7]
-    }
-
-    /// Returns true if the bit at the given square's index is
-    /// set.
-    /// Expects index in range [0, 63].
-    /// Panics in debug mode if index is out of bounds.
-    #[inline]
-    pub fn test(&self, index: u8) -> bool {
-        debug_assert!(index < 64);
-        (self.bits & (1 << index)) != 0
-    }
-
-    /// Returns true if the bit at the given (rank, file) coordinates is set.
-    /// Expects rank and file in range [0, 7], where rank is the row and file is
-    /// the column. Internally maps the square to its index using.
-    #[inline]
-    pub fn test_square(&self, rank: u8, file: u8) -> bool {
-        self.test(Self::square_to_index(rank, file))
+    pub fn test(&self, square: Square) -> bool {
+        (self.bits & (1 << square.index())) != 0
     }
 }
 
@@ -105,10 +83,10 @@ impl From<&str> for Bitboard {
                     // Occupied square - set the bit
                     // i = 0 corresponds to rank 7, file 0 (a8)
                     // i = 63 corresponds to rank 0, file 7 (h1)
-                    let rank = 7 - (i / 8) as u8;
-                    let file = (i % 8) as u8;
-                    let square_index = Self::square_to_index(rank, file);
-                    bits |= 1u64 << square_index;
+                    let rank = Rank::from(7 ^ (i >> 3) as u8); // 7 - i / 8
+                    let file = File::from((i & 7) as u8); // i % 8
+                    let square = Square::from((file, rank));
+                    bits |= 1u64 << square.index();
                 }
                 _ => panic!(
                     "Invalid character '{}' in pattern. Only '0', '.', '1', and 'X' are allowed.",
