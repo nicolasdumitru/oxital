@@ -109,6 +109,11 @@ impl Square {
     }
 
     #[inline]
+    pub fn mask(&self) -> u64 {
+        1u64 << self.idx
+    }
+
+    #[inline]
     pub fn file(&self) -> File {
         File::from(self.idx & 7)
     }
