@@ -71,7 +71,10 @@ impl From<&str> for Bitboard {
         let cleaned: String = pattern.chars().filter(|&ch| !ch.is_whitespace()).collect();
 
         if cleaned.len() != 64 {
-            panic!("Pattern must contain exactly 64 squares, got {}", cleaned.len());
+            panic!(
+                "Pattern must contain exactly 64 squares, got {}",
+                cleaned.len()
+            );
         }
 
         let mut bits: u64 = 0;
@@ -229,100 +232,42 @@ mod tests {
     }
 
     #[test]
-    fn test_square_to_index() {
-        // Test corner squares
-        assert_eq!(Bitboard::square_to_index(0, 0), 0); // a1
-        assert_eq!(Bitboard::square_to_index(0, 7), 7); // h1
-        assert_eq!(Bitboard::square_to_index(7, 0), 56); // a8
-        assert_eq!(Bitboard::square_to_index(7, 7), 63); // h8
-
-        // Test some middle squares
-        assert_eq!(Bitboard::square_to_index(3, 4), 28); // e4
-        assert_eq!(Bitboard::square_to_index(4, 3), 35); // d5
-
-        // Test first rank
-        for file in 0..8 {
-            assert_eq!(Bitboard::square_to_index(0, file), file);
-        }
-
-        // Test first file
-        for rank in 0..8 {
-            assert_eq!(Bitboard::square_to_index(rank, 0), rank * 8);
-        }
-    }
-
-    #[test]
     fn test_bit_testing() {
         // Test empty bitboard
         let empty = Bitboard::from(0);
         for i in 0..64 {
-            assert!(!empty.test(i));
+            assert!(!empty.test(Square::from(i)));
         }
 
         // Test full bitboard
         let full = Bitboard::from(u64::MAX);
         for i in 0..64 {
-            assert!(full.test(i));
+            assert!(full.test(Square::from(i)));
         }
 
         // Test single bit
         let single = Bitboard::from(1);
-        assert!(single.test(0));
+        assert!(single.test(Square::from(0)));
         for i in 1..64 {
-            assert!(!single.test(i));
+            assert!(!single.test(Square::from(i)));
         }
 
         // Test highest bit
         let high = Bitboard::from(1u64 << 63);
-        assert!(high.test(63));
+        assert!(high.test(Square::from(63)));
         for i in 0..63 {
-            assert!(!high.test(i));
+            assert!(!high.test(Square::from(i)));
         }
 
         // Test alternating pattern
         let alternating = Bitboard::from(0xAAAAAAAAAAAAAAAA);
         for i in 0..64 {
             if i % 2 == 1 {
-                assert!(alternating.test(i));
+                assert!(alternating.test(Square::from(i)));
             } else {
-                assert!(!alternating.test(i));
+                assert!(!alternating.test(Square::from(i)));
             }
         }
-    }
-
-    #[test]
-    fn test_square_testing() {
-        // Test empty bitboard
-        let empty = Bitboard::from(0);
-        for rank in 0..8 {
-            for file in 0..8 {
-                assert!(!empty.test_square(rank, file));
-            }
-        }
-
-        // Test single square
-        let single = Bitboard::from(1u64 << 28); // e4
-        assert!(single.test_square(3, 4));
-
-        // Test that other squares are empty
-        for rank in 0..8 {
-            for file in 0..8 {
-                if rank != 3 || file != 4 {
-                    assert!(!single.test_square(rank, file));
-                }
-            }
-        }
-
-        // Test corner squares
-        let corners = Bitboard::from((1u64 << 0) | (1u64 << 7) | (1u64 << 56) | (1u64 << 63));
-        assert!(corners.test_square(0, 0)); // a1
-        assert!(corners.test_square(0, 7)); // h1
-        assert!(corners.test_square(7, 0)); // a8
-        assert!(corners.test_square(7, 7)); // h8
-
-        // Test that middle squares are empty
-        assert!(!corners.test_square(3, 3));
-        assert!(!corners.test_square(4, 4));
     }
 
     #[test]
@@ -396,11 +341,11 @@ mod tests {
         // Test with zero
         let zero = Bitboard::from(0);
         let result = bb1 ^ zero;
-        assert_eq!(result.bits, bb1.bits);
+        assert_eq!(result, bb1);
 
         // Test with self (should be zero)
         let result = bb1 ^ bb1;
-        assert_eq!(result.bits, 0);
+        assert_eq!(result, Bitboard::from(0));
     }
 
     #[test]
@@ -408,33 +353,33 @@ mod tests {
         let mut bb1 = Bitboard::from(0xFF00FF00FF00FF00);
         let bb2 = Bitboard::from(0xF0F0F0F0F0F0F0F0);
         bb1 ^= bb2;
-        assert_eq!(bb1.bits, 0x0FF00FF00FF00FF0);
+        assert_eq!(bb1, Bitboard::from(0x0FF00FF00FF00FF0));
 
         // Test XOR with self (should result in zero)
         let mut bb = Bitboard::from(0xFF00FF00FF00FF00);
         let original = bb;
         bb ^= original;
-        assert_eq!(bb.bits, 0);
+        assert_eq!(bb, Bitboard::from(0));
     }
 
     #[test]
     fn test_bitwise_not() {
         let bb = Bitboard::from(0);
         let result = !bb;
-        assert_eq!(result.bits, u64::MAX);
+        assert_eq!(result, Bitboard::from(u64::MAX));
 
         let bb = Bitboard::from(u64::MAX);
         let result = !bb;
-        assert_eq!(result.bits, 0);
+        assert_eq!(result, Bitboard::from(0));
 
         let bb = Bitboard::from(0xFF00FF00FF00FF00);
         let result = !bb;
-        assert_eq!(result.bits, 0x00FF00FF00FF00FF);
+        assert_eq!(result, Bitboard::from(0x00FF00FF00FF00FF));
 
         // Test double negation
         let bb = Bitboard::from(0x123456789ABCDEF0);
         let result = !!bb;
-        assert_eq!(result.bits, bb.bits);
+        assert_eq!(result, bb);
     }
 
     #[test]
@@ -443,9 +388,9 @@ mod tests {
         let bb2 = bb1; // Copy
         let bb3 = bb1.clone(); // Clone
 
-        assert_eq!(bb1.bits, bb2.bits);
-        assert_eq!(bb1.bits, bb3.bits);
-        assert_eq!(bb2.bits, bb3.bits);
+        assert_eq!(bb1, bb2);
+        assert_eq!(bb1, bb3);
+        assert_eq!(bb2, bb3);
     }
 
     #[test]
@@ -454,20 +399,24 @@ mod tests {
         let mut board = Bitboard::from(0);
 
         // Set e4 (rank 3, file 4)
-        board |= Bitboard::from(1u64 << Bitboard::square_to_index(3, 4));
-        assert!(board.test_square(3, 4));
+        let e4 = Square::from((File::E, Rank::Fourth));
+        board |= Bitboard::from(1u64 << e4.index());
+        assert!(board.test(e4));
 
         // Set d5 (rank 4, file 3)
-        board |= Bitboard::from(1u64 << Bitboard::square_to_index(4, 3));
-        assert!(board.test_square(4, 3));
+        let d5 = Square::from((File::D, Rank::Fifth));
+        board |= Bitboard::from(1u64 << d5.index());
+        assert!(board.test(d5));
 
         // Verify both squares are set
-        assert!(board.test_square(3, 4));
-        assert!(board.test_square(4, 3));
+        assert!(board.test(e4));
+        assert!(board.test(d5));
 
         // Verify other squares are not set
-        assert!(!board.test_square(0, 0));
-        assert!(!board.test_square(7, 7));
+        let a1 = Square::from((File::A, Rank::First));
+        let h8 = Square::from((File::H, Rank::Eighth));
+        assert!(!board.test(a1));
+        assert!(!board.test(h8));
     }
 
     #[test]
@@ -478,31 +427,36 @@ mod tests {
 
         // Chain operations
         let result = (bb1 | bb2) & !bb3;
-        let expected = (bb1.bits | bb2.bits) & !bb3.bits;
-        assert_eq!(result.bits, expected);
+        let expected = Bitboard::from(
+            (0xF0F0F0F0F0F0F0F0u64 | 0xFF00FF00FF00FF00u64) & !0x0F0F0F0F0F0F0F0Fu64,
+        );
+        assert_eq!(result, expected);
 
         // More complex chain
         let result = (bb1 ^ bb2) | (bb2 & bb3);
-        let expected = (bb1.bits ^ bb2.bits) | (bb2.bits & bb3.bits);
-        assert_eq!(result.bits, expected);
+        let expected = Bitboard::from(
+            (0xF0F0F0F0F0F0F0F0u64 ^ 0xFF00FF00FF00FF00u64)
+                | (0xFF00FF00FF00FF00u64 & 0x0F0F0F0F0F0F0F0Fu64),
+        );
+        assert_eq!(result, expected);
     }
 
     #[test]
     fn test_edge_cases() {
         // Test boundary conditions for test() method
         let bb = Bitboard::from(0x8000000000000001);
-        assert!(bb.test(0)); // First bit
-        assert!(bb.test(63)); // Last bit
+        assert!(bb.test(Square::from(0))); // First bit
+        assert!(bb.test(Square::from(63))); // Last bit
         for i in 1..63 {
-            assert!(!bb.test(i));
+            assert!(!bb.test(Square::from(i)));
         }
 
-        // Test boundary conditions for test_square() method
+        // Test corner squares
         let bb = Bitboard::from(0x8100000000000081);
-        assert!(bb.test_square(0, 0)); // a1
-        assert!(bb.test_square(0, 7)); // h1
-        assert!(bb.test_square(7, 0)); // a8
-        assert!(bb.test_square(7, 7)); // h8
+        assert!(bb.test(Square::from((File::A, Rank::First)))); // a1
+        assert!(bb.test(Square::from((File::H, Rank::First)))); // h1
+        assert!(bb.test(Square::from((File::A, Rank::Eighth)))); // a8
+        assert!(bb.test(Square::from((File::H, Rank::Eighth)))); // h8
     }
 
     #[test]
@@ -540,69 +494,69 @@ mod tests {
 
         // Test shifting by different amounts
         let result1 = bb << 1u8;
-        assert_eq!(result1.bits, 0x1E1E1E1E1E1E1E1E);
+        assert_eq!(result1, Bitboard::from(0x1E1E1E1E1E1E1E1E));
 
         let result4 = bb << 4u8;
-        assert_eq!(result4.bits, 0xF0F0F0F0F0F0F0F0);
+        assert_eq!(result4, Bitboard::from(0xF0F0F0F0F0F0F0F0));
 
         let result8 = bb << 8u8;
-        assert_eq!(result8.bits, 0x0F0F0F0F0F0F0F00);
+        assert_eq!(result8, Bitboard::from(0x0F0F0F0F0F0F0F00));
 
         // Test with different integer types that can convert to u8
         let result_u8 = bb << 2u8;
         let result_bool = bb << true; // bool converts to u8 (true = 1)
-        assert_eq!(result_u8.bits, (bb.bits << 2));
-        assert_eq!(result_bool.bits, (bb.bits << 1));
+        assert_eq!(result_u8, Bitboard::from(0x0F0F0F0F0F0F0F0Fu64 << 2));
+        assert_eq!(result_bool, Bitboard::from(0x0F0F0F0F0F0F0F0Fu64 << 1));
 
         // Test shifting by zero
         let result0 = bb << 0u8;
-        assert_eq!(result0.bits, bb.bits);
+        assert_eq!(result0, bb);
 
         // Test overflow behavior
         let high_bit = Bitboard::from(0x8000000000000000);
         let overflow = high_bit << 1u8;
-        assert_eq!(overflow.bits, 0);
+        assert_eq!(overflow, Bitboard::from(0));
 
         // Test shifting with pattern
         let pattern = Bitboard::from(0x0000000000000001);
         let shifted = pattern << 63u8;
-        assert_eq!(shifted.bits, 0x8000000000000000);
+        assert_eq!(shifted, Bitboard::from(0x8000000000000000));
     }
 
     #[test]
     fn test_left_shift_assign() {
         let mut bb = Bitboard::from(0x0F0F0F0F0F0F0F0F);
-        let original = bb.bits;
+        let original = Bitboard::from(0x0F0F0F0F0F0F0F0F);
 
         // Test shifting by 1
         bb <<= 1u8;
-        assert_eq!(bb.bits, 0x1E1E1E1E1E1E1E1E);
+        assert_eq!(bb, Bitboard::from(0x1E1E1E1E1E1E1E1E));
 
         // Reset and test shifting by 4
-        bb = Bitboard::from(original);
+        bb = original;
         bb <<= 4u8;
-        assert_eq!(bb.bits, 0xF0F0F0F0F0F0F0F0);
+        assert_eq!(bb, Bitboard::from(0xF0F0F0F0F0F0F0F0));
 
         // Test with different integer types that can convert to u8
         let mut bb1 = Bitboard::from(0x0F0F0F0F0F0F0F0F);
         let mut bb2 = Bitboard::from(0x0F0F0F0F0F0F0F0F);
         bb1 <<= 3u8;
         bb2 <<= false; // false converts to u8 (false = 0)
-        assert_eq!(bb1.bits, 0x7878787878787878);
-        assert_eq!(bb2.bits, 0x0F0F0F0F0F0F0F0F); // shifted by 0
+        assert_eq!(bb1, Bitboard::from(0x7878787878787878));
+        assert_eq!(bb2, Bitboard::from(0x0F0F0F0F0F0F0F0F)); // shifted by 0
 
         // Test shifting by zero
         let mut bb = Bitboard::from(0x123456789ABCDEF0);
-        let original = bb.bits;
+        let original = bb;
         bb <<= 0u8;
-        assert_eq!(bb.bits, original);
+        assert_eq!(bb, original);
 
         // Test chained assignment
         let mut bb = Bitboard::from(0x0000000000000001);
         bb <<= 1u8;
         bb <<= 1u8;
         bb <<= 1u8;
-        assert_eq!(bb.bits, 0x0000000000000008);
+        assert_eq!(bb, Bitboard::from(0x0000000000000008));
     }
 
     #[test]
@@ -611,78 +565,78 @@ mod tests {
 
         // Test shifting by different amounts
         let result1 = bb >> 1u8;
-        assert_eq!(result1.bits, 0x7878787878787878);
+        assert_eq!(result1, Bitboard::from(0x7878787878787878));
 
         let result4 = bb >> 4u8;
-        assert_eq!(result4.bits, 0x0F0F0F0F0F0F0F0F);
+        assert_eq!(result4, Bitboard::from(0x0F0F0F0F0F0F0F0F));
 
         let result8 = bb >> 8u8;
-        assert_eq!(result8.bits, 0x00F0F0F0F0F0F0F0);
+        assert_eq!(result8, Bitboard::from(0x00F0F0F0F0F0F0F0));
 
         // Test with different integer types that can convert to u8
         let result_u8 = bb >> 2u8;
         let result_bool = bb >> true; // bool converts to u8 (true = 1)
-        assert_eq!(result_u8.bits, (bb.bits >> 2));
-        assert_eq!(result_bool.bits, (bb.bits >> 1));
+        assert_eq!(result_u8, Bitboard::from(0xF0F0F0F0F0F0F0F0u64 >> 2));
+        assert_eq!(result_bool, Bitboard::from(0xF0F0F0F0F0F0F0F0u64 >> 1));
 
         // Test shifting by zero
         let result0 = bb >> 0u8;
-        assert_eq!(result0.bits, bb.bits);
+        assert_eq!(result0, bb);
 
         // Test underflow behavior
         let low_bit = Bitboard::from(0x0000000000000001);
         let underflow = low_bit >> 1u8;
-        assert_eq!(underflow.bits, 0);
+        assert_eq!(underflow, Bitboard::from(0));
 
         // Test shifting with pattern
         let pattern = Bitboard::from(0x8000000000000000);
         let shifted = pattern >> 63u8;
-        assert_eq!(shifted.bits, 0x0000000000000001);
+        assert_eq!(shifted, Bitboard::from(0x0000000000000001));
 
         // Test large shift (close to complete but not overflow)
         let large_shift = bb >> 63u8;
-        assert_eq!(large_shift.bits, bb.bits >> 63);
+        assert_eq!(large_shift, Bitboard::from(0xF0F0F0F0F0F0F0F0u64 >> 63));
     }
 
     #[test]
     fn test_right_shift_assign() {
         let mut bb = Bitboard::from(0xF0F0F0F0F0F0F0F0);
-        let original = bb.bits;
+        let original = Bitboard::from(0xF0F0F0F0F0F0F0F0);
 
         // Test shifting by 1
         bb >>= 1u8;
-        assert_eq!(bb.bits, 0x7878787878787878);
+        assert_eq!(bb, Bitboard::from(0x7878787878787878));
 
         // Reset and test shifting by 4
-        bb = Bitboard::from(original);
+        bb = original;
         bb >>= 4u8;
-        assert_eq!(bb.bits, 0x0F0F0F0F0F0F0F0F);
+        assert_eq!(bb, Bitboard::from(0x0F0F0F0F0F0F0F0F));
 
         // Test with different integer types that can convert to u8
         let mut bb1 = Bitboard::from(0xF0F0F0F0F0F0F0F0);
         let mut bb2 = Bitboard::from(0xF0F0F0F0F0F0F0F0);
         bb1 >>= 3u8;
         bb2 >>= false; // false converts to u8 (false = 0)
-        assert_eq!(bb1.bits, 0x1E1E1E1E1E1E1E1E);
-        assert_eq!(bb2.bits, 0xF0F0F0F0F0F0F0F0); // shifted by 0
+        assert_eq!(bb1, Bitboard::from(0x1E1E1E1E1E1E1E1E));
+        assert_eq!(bb2, Bitboard::from(0xF0F0F0F0F0F0F0F0)); // shifted by 0
 
         // Test shifting by zero
         let mut bb = Bitboard::from(0x123456789ABCDEF0);
-        let original = bb.bits;
+        let original = bb;
         bb >>= 0u8;
-        assert_eq!(bb.bits, original);
+        assert_eq!(bb, original);
 
         // Test chained assignment
         let mut bb = Bitboard::from(0x8000000000000000);
         bb >>= 1u8;
         bb >>= 1u8;
         bb >>= 1u8;
-        assert_eq!(bb.bits, 0x1000000000000000);
+        assert_eq!(bb, Bitboard::from(0x1000000000000000));
 
         // Test shifting to zero
         let mut bb = Bitboard::from(0x0000000000000001);
         bb >>= 1u8;
-        assert_eq!(bb.bits, 0);
+        assert_eq!(bb, Bitboard::from(0));
     }
 
     #[test]
@@ -693,18 +647,18 @@ mod tests {
         // (when no bits are lost)
         let shifted_left = original << 8u8;
         let back_to_original = shifted_left >> 8u8;
-        assert_eq!(back_to_original.bits, original.bits);
+        assert_eq!(back_to_original, original);
 
         // Test the reverse
         let shifted_right = original >> 8u8;
         let back_to_original = shifted_right << 8u8;
-        assert_eq!(back_to_original.bits, original.bits);
+        assert_eq!(back_to_original, original);
 
         // Test with assign operations
         let mut bb = original;
         bb <<= 4u8;
         bb >>= 4u8;
-        assert_eq!(bb.bits, original.bits);
+        assert_eq!(bb, original);
     }
 
     #[test]
@@ -722,7 +676,7 @@ mod tests {
             ........
         ",
         );
-        assert_eq!(empty.bits, 0);
+        assert_eq!(empty, Bitboard::from(0));
 
         // Test single bit at a8 (rank 7, file 0)
         let a8 = Bitboard::from(
@@ -737,7 +691,7 @@ mod tests {
             ........
         ",
         );
-        assert_eq!(a8.bits, 1u64 << 56);
+        assert_eq!(a8, Bitboard::from(1u64 << 56));
 
         // Test single bit at h1 (rank 0, file 7)
         let h1 = Bitboard::from(
@@ -752,7 +706,7 @@ mod tests {
             .......1
         ",
         );
-        assert_eq!(h1.bits, 1u64 << 7);
+        assert_eq!(h1, Bitboard::from(1u64 << 7));
     }
 
     #[test]
@@ -762,8 +716,8 @@ mod tests {
             Bitboard::from("................................................................");
         let empty_zeros =
             Bitboard::from("0000000000000000000000000000000000000000000000000000000000000000");
-        assert_eq!(empty_dots.bits, 0);
-        assert_eq!(empty_zeros.bits, 0);
+        assert_eq!(empty_dots, Bitboard::from(0));
+        assert_eq!(empty_zeros, Bitboard::from(0));
 
         // Test all valid occupied characters
         let pattern_ones = Bitboard::from(
@@ -790,8 +744,8 @@ mod tests {
             ........
         ",
         );
-        assert_eq!(pattern_ones.bits, pattern_x.bits);
-        assert_eq!(pattern_ones.bits, 1u64 << 56);
+        assert_eq!(pattern_ones, pattern_x);
+        assert_eq!(pattern_ones, Bitboard::from(1u64 << 56));
     }
 
     #[test]
@@ -800,7 +754,7 @@ mod tests {
         let compact =
             Bitboard::from("1000000000000000000000000000000000000000000000000000000000000001");
         // Should have bits set at a8 (index 56) and h1 (index 7)
-        assert_eq!(compact.bits, (1u64 << 56) | (1u64 << 7));
+        assert_eq!(compact, Bitboard::from((1u64 << 56) | (1u64 << 7)));
     }
 
     #[test]
@@ -819,7 +773,7 @@ mod tests {
         ",
         );
         let expected = (1u64 << 56) | (1u64 << 7);
-        assert_eq!(with_spaces.bits, expected);
+        assert_eq!(with_spaces, Bitboard::from(expected));
     }
 
     #[test]
@@ -839,7 +793,7 @@ mod tests {
         );
         // Rank 6 (index 48-55) and rank 1 (index 8-15) should be set
         let expected = 0x00FF_0000_0000_FF00u64;
-        assert_eq!(pawns.bits, expected);
+        assert_eq!(pawns, Bitboard::from(expected));
     }
 
     #[test]
