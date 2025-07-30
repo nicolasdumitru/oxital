@@ -5,6 +5,7 @@ use criterion::{Criterion, black_box, criterion_group, criterion_main};
 
 // Import from your library - replace 'your_crate_name' with actual name
 use oxital::bitboard::Bitboard;
+use oxital::types::Square;
 
 // Compare get method vs index operator for single bit access
 fn bench_comparison_single_access(c: &mut Criterion) {
@@ -16,7 +17,7 @@ fn bench_comparison_single_access(c: &mut Criterion) {
         b.iter(|| {
             let mut sum = 0u32;
             for i in 0..64 {
-                if board.test(black_box(i)) {
+                if board.test(black_box(Square::from(i))) {
                     sum += 1;
                 }
             }
