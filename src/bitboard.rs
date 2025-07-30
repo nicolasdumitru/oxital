@@ -24,6 +24,36 @@ impl Bitboard {
     }
 }
 
+impl From<Square> for Bitboard {
+    /// Creates a Bitboard from a Square by setting only that square's bit.
+    ///
+    /// This creates a bitboard with exactly one bit set - the bit corresponding
+    /// to the given square. This is useful for creating single-square bitboards
+    /// for operations like checking if a piece is on a specific square, or for
+    /// building up more complex bitboards by combining single squares.
+    ///
+    /// # Examples
+    /// ```
+    /// # use oxital::bitboard::Bitboard;
+    /// # use oxital::types::{Square, File, Rank};
+    /// // Create a bitboard with only the e4 square set
+    /// let e4 = Square::from((File::E, Rank::Fourth));
+    /// let bitboard = Bitboard::from(e4);
+    /// assert!(bitboard.test(e4));
+    ///
+    /// // Create a bitboard for the a1 square
+    /// let a1 = Square::from((File::A, Rank::First));
+    /// let bitboard = Bitboard::from(a1);
+    /// assert!(bitboard.test(a1));
+    /// ```
+    #[inline]
+    fn from(square: Square) -> Self {
+        Self {
+            bits: 1u64 << square.index(),
+        }
+    }
+}
+
 impl From<u64> for Bitboard {
     /// Creates a Bitboard from a u64.
     #[inline]
@@ -229,6 +259,74 @@ mod tests {
 
         let bb = Bitboard::from(0x123456789ABCDEF0);
         assert!(bb == Bitboard::from(0x123456789ABCDEF0));
+    }
+
+    #[test]
+    fn test_from_square() {
+        // Test corner squares
+        let a1 = Square::from((File::A, Rank::First));
+        let bb_a1 = Bitboard::from(a1);
+        assert!(bb_a1.test(a1));
+        assert_eq!(bb_a1, Bitboard::from(1u64 << 0)); // a1 is index 0
+
+        let h1 = Square::from((File::H, Rank::First));
+        let bb_h1 = Bitboard::from(h1);
+        assert!(bb_h1.test(h1));
+        assert_eq!(bb_h1, Bitboard::from(1u64 << 7)); // h1 is index 7
+
+        let a8 = Square::from((File::A, Rank::Eighth));
+        let bb_a8 = Bitboard::from(a8);
+        assert!(bb_a8.test(a8));
+        assert_eq!(bb_a8, Bitboard::from(1u64 << 56)); // a8 is index 56
+
+        let h8 = Square::from((File::H, Rank::Eighth));
+        let bb_h8 = Bitboard::from(h8);
+        assert!(bb_h8.test(h8));
+        assert_eq!(bb_h8, Bitboard::from(1u64 << 63)); // h8 is index 63
+
+        // Test center squares
+        let e4 = Square::from((File::E, Rank::Fourth));
+        let bb_e4 = Bitboard::from(e4);
+        assert!(bb_e4.test(e4));
+        assert_eq!(bb_e4, Bitboard::from(1u64 << 28)); // e4 is index 28
+
+        let d5 = Square::from((File::D, Rank::Fifth));
+        let bb_d5 = Bitboard::from(d5);
+        assert!(bb_d5.test(d5));
+        assert_eq!(bb_d5, Bitboard::from(1u64 << 35)); // d5 is index 35
+
+        // Test that only the target square is set
+        for i in 0..64 {
+            let square = Square::from(i);
+            let bitboard = Bitboard::from(square);
+
+            // The target square should be set
+            assert!(bitboard.test(square));
+
+            // All other squares should be empty
+            for j in 0..64 {
+                if j != i {
+                    let other_square = Square::from(j);
+                    assert!(!bitboard.test(other_square));
+                }
+            }
+        }
+
+        // Test bitboard operations with single squares
+        let e1 = Square::from((File::E, Rank::First));
+        let e8 = Square::from((File::E, Rank::Eighth));
+        let bb_e1 = Bitboard::from(e1);
+        let bb_e8 = Bitboard::from(e8);
+
+        // Combining two single-square bitboards should set both squares
+        let combined = bb_e1 | bb_e8;
+        assert!(combined.test(e1));
+        assert!(combined.test(e8));
+
+        // XOR with itself should result in empty bitboard
+        let empty = bb_e1 ^ bb_e1;
+        assert!(!empty.test(e1));
+        assert_eq!(empty, Bitboard::from(0));
     }
 
     #[test]
