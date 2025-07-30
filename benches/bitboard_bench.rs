@@ -5,7 +5,7 @@ use criterion::{Criterion, black_box, criterion_group, criterion_main};
 
 // Import from your library - replace 'your_crate_name' with actual name
 use oxital::bitboard::Bitboard;
-use oxital::types::Square;
+use oxital::types::{File, Rank, Square};
 
 // Compare get method vs index operator for single bit access
 fn bench_comparison_single_access(c: &mut Criterion) {
@@ -37,9 +37,10 @@ fn bench_comparison_rank_file_access(c: &mut Criterion) {
     group.bench_function("`test_square` method", |b| {
         b.iter(|| {
             let mut sum = 0u32;
-            for rank in 0..8 {
-                for file in 0..8 {
-                    if board.test_square(black_box(rank), black_box(file)) {
+            for rank_idx in 0..8 {
+                for file_idx in 0..8 {
+                    let square = Square::from((File::from(file_idx), Rank::from(rank_idx)));
+                    if board.test(black_box(square)) {
                         sum += 1;
                     }
                 }
@@ -63,11 +64,12 @@ fn bench_chess_pattern(c: &mut Criterion) {
         b.iter(|| {
             let mut attacks = 0u64;
             // Check east from a1
-            for file in 1..8 {
-                if occupied.test_square(0, file) {
+            for file_idx in 1..8 {
+                let square = Square::from((File::from(file_idx), Rank::from(0)));
+                if occupied.test(square) {
                     break; // Hit a piece
                 }
-                attacks |= 1 << (file as u64);
+                attacks |= 1 << (file_idx as u64);
             }
             black_box(attacks)
         })
