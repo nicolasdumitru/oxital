@@ -8,6 +8,7 @@ use std::ops::{BitOr, BitOrAssign};
 use std::ops::{BitXor, BitXorAssign};
 use std::ops::{Shl, ShlAssign};
 use std::ops::{Shr, ShrAssign};
+use std::ops::{Sub, SubAssign};
 
 use crate::types::{File, Rank, Square};
 
@@ -242,6 +243,23 @@ where
     #[inline]
     fn shr_assign(&mut self, rhs: T) {
         self.bits >>= rhs.into()
+    }
+}
+
+impl Sub for Bitboard {
+    type Output = Self;
+    #[inline]
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self::Output {
+            bits: self.bits & !rhs.bits,
+        }
+    }
+}
+
+impl SubAssign for Bitboard {
+    #[inline]
+    fn sub_assign(&mut self, rhs: Self) {
+        self.bits &= !rhs.bits
     }
 }
 
