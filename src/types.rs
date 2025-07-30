@@ -133,7 +133,7 @@ impl From<(File, Rank)> for Square {
     #[inline]
     fn from((file, rank): (File, Rank)) -> Self {
         Self {
-            idx: ((rank as u8) << 3) | file as u8,
+            idx: ((rank as u8) << 3) | file as u8, // <=> 8 * rank + file
         }
     }
 }
