@@ -1,7 +1,6 @@
 // Copyright (C) 2025 Nicolas Dumitru
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use core::convert::From;
 use std::cmp::PartialEq;
 use std::ops::Not;
 use std::ops::{BitAnd, BitAndAssign};
