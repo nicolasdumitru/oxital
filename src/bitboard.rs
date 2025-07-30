@@ -21,7 +21,7 @@ impl Bitboard {
     /// Returns true if the bit of the given square is set.
     #[inline]
     pub fn test(&self, square: Square) -> bool {
-        (self.bits & (1 << square.index())) != 0
+        (self.bits & square.mask()) != 0
     }
 
     /// Returns the bitboard with one bit set
@@ -78,7 +78,7 @@ impl From<Square> for Bitboard {
     #[inline]
     fn from(square: Square) -> Self {
         Self {
-            bits: 1u64 << square.index(),
+            bits: square.mask(),
         }
     }
 }
@@ -148,7 +148,7 @@ impl From<&str> for Bitboard {
                     let rank = Rank::from(7 ^ (i >> 3) as u8); // 7 - i / 8
                     let file = File::from((i & 7) as u8); // i % 8
                     let square = Square::from((file, rank));
-                    bits |= 1u64 << square.index();
+                    bits |= square.mask();
                 }
                 _ => panic!(
                     "Invalid character '{}' in pattern. Only '0', '.', '1', and 'X' are allowed.",
@@ -174,20 +174,20 @@ impl PartialEq for Bitboard {
 }
 
 impl Not for Bitboard {
-    type Output = Bitboard;
-
+    type Output = Self;
     #[inline]
     fn not(self) -> Self::Output {
-        Self::from(!self.bits)
+        Self::Output { bits: !self.bits }
     }
 }
 
 impl BitAnd for Bitboard {
-    type Output = Bitboard;
-
+    type Output = Self;
     #[inline]
     fn bitand(self, rhs: Self) -> Self::Output {
-        Self::from(self.bits & rhs.bits)
+        Self::Output {
+            bits: self.bits & rhs.bits,
+        }
     }
 }
 
@@ -199,11 +199,12 @@ impl BitAndAssign for Bitboard {
 }
 
 impl BitOr for Bitboard {
-    type Output = Bitboard;
-
+    type Output = Self;
     #[inline]
     fn bitor(self, rhs: Self) -> Self::Output {
-        Self::from(self.bits | rhs.bits)
+        Self::Output {
+            bits: self.bits | rhs.bits,
+        }
     }
 }
 
@@ -215,11 +216,12 @@ impl BitOrAssign for Bitboard {
 }
 
 impl BitXor for Bitboard {
-    type Output = Bitboard;
-
+    type Output = Self;
     #[inline]
     fn bitxor(self, rhs: Self) -> Self::Output {
-        Self::from(self.bits ^ rhs.bits)
+        Self::Output {
+            bits: self.bits ^ rhs.bits,
+        }
     }
 }
 
@@ -234,11 +236,12 @@ impl<T> Shl<T> for Bitboard
 where
     T: Into<u8>,
 {
-    type Output = Bitboard;
-
+    type Output = Self;
     #[inline]
     fn shl(self, rhs: T) -> Self::Output {
-        Self::from(self.bits << rhs.into())
+        Self::Output {
+            bits: self.bits << rhs.into(),
+        }
     }
 }
 
@@ -256,11 +259,12 @@ impl<T> Shr<T> for Bitboard
 where
     T: Into<u8>,
 {
-    type Output = Bitboard;
-
+    type Output = Self;
     #[inline]
     fn shr(self, rhs: T) -> Self::Output {
-        Self::from(self.bits >> rhs.into())
+        Self::Output {
+            bits: self.bits >> rhs.into(),
+        }
     }
 }
 
