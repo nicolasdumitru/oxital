@@ -23,15 +23,33 @@ impl Board {
         self.theirs
     }
     #[inline]
-    pub fn pawns(&self) -> Bitboard {
-        self.pawns
+    pub fn kings(&self) -> Bitboard {
+        Bitboard::from(self.our_king) | Bitboard::from(self.their_king)
     }
     #[inline]
     pub fn queens(&self) -> Bitboard {
         self.orthogonals & self.diagonals
     }
     #[inline]
-    pub fn kings(&self) -> Bitboard {
-        Bitboard::from(self.our_king) | Bitboard::from(self.their_king)
+    pub fn rooks(&self) -> Bitboard {
+        self.orthogonals - self.diagonals
+    }
+    #[inline]
+    pub fn bishops(&self) -> Bitboard {
+        self.diagonals - self.orthogonals
+    }
+    #[inline]
+    pub fn knights(&self) -> Bitboard {
+        self.ours
+            | self.theirs
+                - self.orthogonals
+                - self.diagonals
+                - self.pawns
+                - self.our_king
+                - self.their_king
+    }
+    #[inline]
+    pub fn pawns(&self) -> Bitboard {
+        self.pawns
     }
 }
