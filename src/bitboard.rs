@@ -12,6 +12,15 @@ use std::ops::{Sub, SubAssign};
 
 use crate::types::{File, Rank, Square};
 
+/// `Bitboard` is a thin wrapper around `u64` bit masks representing finite sets
+/// of up to 64 elements. `Bitboard` provides fast, type-safe and, convenient
+/// set operations by implementing them as bitwise operations on 64-bit masks.
+/// In the context of chess, `Bitboard`s are used to represent all of the 64
+/// squares of a chessboard, one bit per square in each `Bitboard`.
+///
+/// By design, `Bitboard` depends directly on `Square` for the mapping between
+/// square and bits. As an implementation detail, it follows that `Bitboard`'s
+/// internal mask representation is compatible with `Square::mask()`.
 #[derive(Clone, Copy, Debug)]
 pub struct Bitboard {
     bits: u64,
@@ -24,7 +33,7 @@ impl Bitboard {
         (self.bits & square.mask()) != 0
     }
 
-    /// Returns the bitboard with one bit set
+    /// Returns the bitboard with one bit set.
     #[inline]
     pub fn set(&self, square: Square) -> Self {
         Self {
@@ -32,13 +41,13 @@ impl Bitboard {
         }
     }
 
-    /// Sets a bit of the bitboard
+    /// Sets a bit of the bitboard.
     #[inline]
     pub fn set_mut(&mut self, square: Square) {
         self.bits |= square.mask()
     }
 
-    /// Returns the bitboard with one bit unset
+    /// Returns the bitboard with one bit unset.
     #[inline]
     pub fn unset(&self, square: Square) -> Self {
         Self {
@@ -46,7 +55,7 @@ impl Bitboard {
         }
     }
 
-    /// Unsets a bit of the bitboard
+    /// Unsets a bit of the bitboard.
     #[inline]
     pub fn unset_mut(&mut self, square: Square) {
         self.bits &= !square.mask()
@@ -54,7 +63,7 @@ impl Bitboard {
 }
 
 impl From<Square> for Bitboard {
-    /// Creates a Bitboard from a Square by setting only that square's bit.
+    /// Creates a Bitboard from a `Square` by setting only that square's bit.
     ///
     /// This creates a bitboard with exactly one bit set - the bit corresponding
     /// to the given square. This is useful for creating single-square bitboards
@@ -84,7 +93,7 @@ impl From<Square> for Bitboard {
 }
 
 impl From<u64> for Bitboard {
-    /// Creates a Bitboard from a u64.
+    /// Creates a `Bitboard` from a `u64` bit mask.
     #[inline]
     fn from(bits: u64) -> Self {
         Self { bits }
@@ -94,19 +103,20 @@ impl From<u64> for Bitboard {
 impl From<&str> for Bitboard {
     /// Creates a Bitboard from a pattern string.
     ///
-    /// This constructor provides a flexible way to create bitboards from string literals
-    /// for better visualization of constants. The encoding is:
+    /// This constructor provides a flexible way to create bitboards from string
+    /// literals for better visualization of constants. The encoding is:
     /// - '0' or '.' represents an empty square (unset bit)
     /// - '1' or 'X' represents an occupied square (set bit)
     /// - Newlines are ignored and only used for visual delimitation of ranks
     /// - Any other characters will cause a panic at runtime
     ///
-    /// The pattern should represent exactly 64 squares, read from rank 8 to rank 1
-    /// (top to bottom), and from file a to file h (left to right).
+    /// The pattern should represent exactly 64 squares, read from rank 8 to
+    /// rank 1 (top to bottom), and from file a to file h (left to right).
     ///
     /// # Panics
     ///
-    /// Panics if the pattern contains invalid characters or doesn't represent exactly 64 squares.
+    /// Panics if the pattern contains invalid characters or doesn't represent
+    /// exactly 64 squares.
     ///
     /// # Example
     /// ```
@@ -121,9 +131,6 @@ impl From<&str> for Bitboard {
     ///     ......X.
     ///     ........
     /// ");
-    ///
-    /// // Or more compactly:
-    /// let board = Bitboard::from("0000000000000000000000000001000000000000000000000000000000000000");
     /// ```
     fn from(pattern: &str) -> Self {
         // Filter out newlines and whitespace for processing
