@@ -33,6 +33,18 @@ impl Bitboard {
         (self.bits & square.mask()) != 0
     }
 
+    /// Returns the number of ones in the binary representation of `self`.
+    #[inline]
+    pub fn count_ones(self) -> u32 {
+        self.bits.count_ones()
+    }
+
+    /// Returns the number of zeros in the binary representation of `self`.
+    #[inline]
+    pub fn count_zeros(self) -> u32 {
+        self.bits.count_zeros()
+    }
+
     /// Returns the bitboard with one bit set.
     #[inline]
     pub fn set(&self, square: Square) -> Self {
