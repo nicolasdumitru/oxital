@@ -205,7 +205,7 @@ impl BitAndAssign for Bitboard {
     }
 }
 
-impl BitOr for Bitboard {
+impl BitOr<Self> for Bitboard {
     type Output = Self;
     #[inline]
     fn bitor(self, rhs: Self) -> Self::Output {
@@ -215,10 +215,29 @@ impl BitOr for Bitboard {
     }
 }
 
-impl BitOrAssign for Bitboard {
+impl BitOr<Square> for Bitboard {
+    type Output = Self;
+    /// Performs the bit setting operation.
+    #[inline]
+    fn bitor(self, rhs: Square) -> Self::Output {
+        Self::Output {
+            bits: self.bits | rhs.mask(),
+        }
+    }
+}
+
+impl BitOrAssign<Self> for Bitboard {
     #[inline]
     fn bitor_assign(&mut self, rhs: Self) {
         self.bits |= rhs.bits;
+    }
+}
+
+impl BitOrAssign<Square> for Bitboard {
+    /// Set bit assignment operator.
+    #[inline]
+    fn bitor_assign(&mut self, rhs: Square) {
+        self.bits |= rhs.mask();
     }
 }
 
@@ -285,8 +304,9 @@ where
     }
 }
 
-impl Sub for Bitboard {
+impl Sub<Self> for Bitboard {
     type Output = Self;
+    /// Performs the set difference operation.
     #[inline]
     fn sub(self, rhs: Self) -> Self::Output {
         Self::Output {
@@ -295,10 +315,30 @@ impl Sub for Bitboard {
     }
 }
 
-impl SubAssign for Bitboard {
+impl Sub<Square> for Bitboard {
+    type Output = Self;
+    /// Performs the bit unsetting operation.
+    #[inline]
+    fn sub(self, rhs: Square) -> Self::Output {
+        Self::Output {
+            bits: self.bits & !rhs.mask(),
+        }
+    }
+}
+
+impl SubAssign<Self> for Bitboard {
+    /// Set difference assignment operator.
     #[inline]
     fn sub_assign(&mut self, rhs: Self) {
         self.bits &= !rhs.bits
+    }
+}
+
+impl SubAssign<Square> for Bitboard {
+    /// Unset bit assignment operator.
+    #[inline]
+    fn sub_assign(&mut self, rhs: Square) {
+        self.bits &= !rhs.mask()
     }
 }
 
