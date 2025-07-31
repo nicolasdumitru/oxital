@@ -29,7 +29,7 @@ pub struct Bitboard {
 impl Bitboard {
     /// Returns true if the bit of the given square is set.
     #[inline]
-    pub fn test(&self, square: Square) -> bool {
+    pub fn test(self, square: Square) -> bool {
         (self.bits & square.mask()) != 0
     }
 
@@ -47,7 +47,7 @@ impl Bitboard {
 
     /// Returns the bitboard with one bit set.
     #[inline]
-    pub fn set(&self, square: Square) -> Self {
+    pub fn set(self, square: Square) -> Self {
         Self {
             bits: self.bits | square.mask(),
         }
@@ -61,7 +61,7 @@ impl Bitboard {
 
     /// Returns the bitboard with one bit unset.
     #[inline]
-    pub fn unset(&self, square: Square) -> Self {
+    pub fn unset(self, square: Square) -> Self {
         Self {
             bits: self.bits & !square.mask(),
         }
