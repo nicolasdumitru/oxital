@@ -66,6 +66,26 @@ impl Board {
     pub fn pawns(&self) -> Bitboard {
         self.pawns
     }
+
+    pub fn from_fen(fen: &str) -> Self {
+        let fields: Vec<&str> = fen.split_whitespace().collect();
+        let mut board = Self::new();
+
+        let piece_data = fields[0];
+        for (rank, rank_pieces) in piece_data.split('/').rev().enumerate() {
+            let file: u8 = 0;
+            for ch in rank_pieces.chars() {
+                match ch {
+                    'P' | 'p' => {
+                        board.pawns |= Square::from((file, rank as u8))
+                        // TODO: ours/theirs for white/black
+                    }
+                    _ => panic!("Invalid character in FEN"),
+                }
+            }
+        }
+        board
+    }
 }
 
 impl Default for Board {

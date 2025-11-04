@@ -22,6 +22,7 @@ use crate::types::{File, Rank, Square};
 /// square and bits. As an implementation detail, it follows that `Bitboard`'s
 /// internal mask representation is compatible with `Square::mask()`.
 #[derive(Clone, Copy, Debug)]
+#[repr(transparent)]
 pub struct Bitboard {
     bits: u64,
 }

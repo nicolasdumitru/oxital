@@ -1,36 +1,25 @@
 // Copyright (C) 2025 Nicolas Dumitru
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+// TODO: Convert File and Rank to #[repr(transparent)] structs. They are going
+// to be wrappers around u8.
+// - goal: prevent mixing up files and ranks when given as arguments to other
+//   functions, constructors, etc. (among other things)
+// - #[repr(transparent)] ensures identical performance to that of primitive
+//   types for the same operations
+// - inspiration: https://github.com/LeelaChessZero/lc0/blob/master/src/chess/types.h
+
 use std::fmt;
 
 #[derive(Clone, Copy, Debug)]
-#[repr(u8)]
-pub enum File {
-    A = 0,
-    B = 1,
-    C = 2,
-    D = 3,
-    E = 4,
-    F = 5,
-    G = 6,
-    H = 7,
+#[repr(transparent)]
+pub struct File {
+    idx: u8,
 }
 
 impl From<u8> for File {
     #[inline]
-    fn from(value: u8) -> Self {
-        match value {
-            0 => File::A,
-            1 => File::B,
-            2 => File::C,
-            3 => File::D,
-            4 => File::E,
-            5 => File::F,
-            6 => File::G,
-            7 => File::H,
-            _ => panic!("Invalid file value: {}", value),
-        }
-    }
+    fn from(value: u8) -> Self {}
 }
 
 impl fmt::Display for File {
@@ -98,6 +87,7 @@ impl fmt::Display for Rank {
 }
 
 #[derive(Clone, Copy, Debug)]
+#[repr(transparent)]
 pub struct Square {
     idx: u8,
 }
@@ -139,10 +129,19 @@ impl Default for Square {
 impl From<u8> for Square {
     #[inline]
     fn from(index: u8) -> Self {
-        if index >= 64 {
-            panic!("Square index must be less than 64")
-        }
+        assert!(index >= 64, "Square index must be less than 64");
         Self { idx: index }
+    }
+}
+
+impl From<(u8, u8)> for Square {
+    #[inline]
+    fn from((file, rank): (u8, u8)) -> Self {
+        assert!(file > 7, "File must be in [0, 7]");
+        assert!(rank > 7, "Rank index must be in [0, 7]");
+        Self {
+            idx: (rank << 3) | file, // <=> 8 * rank + file
+        }
     }
 }
 
