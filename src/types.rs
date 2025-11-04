@@ -104,6 +104,11 @@ pub struct Square {
 
 impl Square {
     #[inline]
+    pub fn new() -> Self {
+        Self { idx: 0 }
+    }
+
+    #[inline]
     pub fn index(&self) -> u8 {
         self.idx
     }
@@ -121,6 +126,13 @@ impl Square {
     #[inline]
     pub fn rank(&self) -> Rank {
         Rank::from(self.idx >> 3)
+    }
+}
+
+impl Default for Square {
+    #[inline]
+    fn default() -> Self {
+        Self::new()
     }
 }
 
