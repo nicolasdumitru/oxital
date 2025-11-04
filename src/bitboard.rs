@@ -27,6 +27,12 @@ pub struct Bitboard {
 }
 
 impl Bitboard {
+    /// Create a new empty bitboard (all 0s).
+    #[inline]
+    pub fn new() -> Self {
+        Self { bits: 0 }
+    }
+
     /// Returns true if the bit of the given square is set.
     #[inline]
     pub fn test(self, square: Square) -> bool {
@@ -71,6 +77,13 @@ impl Bitboard {
     #[inline]
     pub fn unset_mut(&mut self, square: Square) {
         self.bits &= !square.mask()
+    }
+}
+
+impl Default for Bitboard {
+    #[inline]
+    fn default() -> Self {
+        Self::new()
     }
 }
 
