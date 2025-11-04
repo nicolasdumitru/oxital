@@ -3,6 +3,7 @@
 
 use crate::{bitboard::Bitboard, types::Square};
 
+#[derive(Clone, Copy)]
 pub struct Board {
     ours: Bitboard,        // All of our pieces
     theirs: Bitboard,      // All of the opponent's pieces
@@ -14,6 +15,19 @@ pub struct Board {
 }
 
 impl Board {
+    #[inline]
+    pub fn new() -> Self {
+        Self {
+            ours: Bitboard::new(),
+            theirs: Bitboard::new(),
+            orthogonals: Bitboard::new(),
+            diagonals: Bitboard::new(),
+            pawns: Bitboard::new(),
+            our_king: Square::new(),
+            their_king: Square::new(),
+        }
+    }
+
     #[inline]
     pub fn ours(&self) -> Bitboard {
         self.ours
@@ -51,5 +65,12 @@ impl Board {
     #[inline]
     pub fn pawns(&self) -> Bitboard {
         self.pawns
+    }
+}
+
+impl Default for Board {
+    #[inline]
+    fn default() -> Self {
+        Self::new()
     }
 }
